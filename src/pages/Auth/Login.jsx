@@ -1,40 +1,35 @@
-import React, { useState, useContext } from 'react';
-import API from '../../api/axiosConfig';
-import { AuthContext } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import '../../index.css';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { login } = useContext(AuthContext);
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post('/auth/login', { email, password });
-      login(res.data.user, res.data.token);
-
-      // Redirect based on role
-      if (res.data.user.role === 'STUDENT') navigate('/student');
-      else if (res.data.user.role === 'INSTRUCTOR') navigate('/instructor');
-      else navigate('/admin');
+      const res = await axios.post("http://localhost:8080/api/auth/login", { email, password });
+      localStorage.setItem("token", res.data.token);
+      navigate("/dashboard");
     } catch (err) {
-      alert('Invalid credentials');
+      alert("Invalid credentials");
     }
   };
 
   return (
     <div className="auth-container">
-      <h2>Login to SkillForge</h2>
-      <form onSubmit={handleLogin}>
-        <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Password"
-               onChange={(e) => setPassword(e.target.value)} />
-        <button type="submit">Login</button>
-      </form>
+      <div className="auth-box">
+        <h2>Login</h2>
+        <form onSubmit={handleLogin}>
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="/signup">Sign up</a></p>
+      </div>
     </div>
   );
-};
-
-export default Login;
+}
