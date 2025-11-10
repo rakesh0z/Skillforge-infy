@@ -6,27 +6,55 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET_KEY = "mysupersecurekeyformyskillforgeproject1234567890"; // At least 32 chars
+    private static final String SECRET_KEY = "mysupersecurekeyformyskillforgeproject1234567890"; // >=32 chars
+    private static final Key KEY = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
-    public String generateToken(String username) {
-        Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-
+    public String generateToken(String email, String role) {
+        long expirationMs = 1000L * 60 * 60; // 1 hour
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
+                .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
-                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(KEY).build().parseClaimsJws(token).getBody();
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
+        final Claims claims = extractAllClaims(token);
+        return resolver.apply(claims);
+    }
+
     public String extractEmail(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public boolean isTokenValidFormat(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 }
