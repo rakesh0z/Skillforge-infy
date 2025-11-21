@@ -22,6 +22,22 @@ public class CloudinaryConfig {
 
     @Bean
     public Cloudinary cloudinary() {
+        // Validate credentials are not null
+        if (cloudName == null || cloudName.trim().isEmpty()) {
+            throw new IllegalStateException("Cloudinary cloud_name is not configured");
+        }
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            throw new IllegalStateException("Cloudinary api_key is not configured");
+        }
+        if (apiSecret == null || apiSecret.trim().isEmpty()) {
+            throw new IllegalStateException("Cloudinary api_secret is not configured");
+        }
+        
+        System.out.println("🔧 Cloudinary Config:");
+        System.out.println("   Cloud Name: " + cloudName);
+        System.out.println("   API Key: " + apiKey);
+        System.out.println("   API Secret: " + (apiSecret.length() > 0 ? "***" + apiSecret.substring(Math.max(0, apiSecret.length() - 4)) : "NOT SET"));
+        
         Map<String, String> config = ObjectUtils.asMap(
                 "cloud_name", cloudName,
                 "api_key", apiKey,

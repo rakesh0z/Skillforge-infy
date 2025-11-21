@@ -4,6 +4,7 @@ import com.skill_forge.infy_intern.model.User;
 import com.skill_forge.infy_intern.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -36,6 +37,8 @@ public class AuthController {
                 "name", user.getName()
         ));
     }
+
+
 
 
 }

@@ -7,12 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.io.IOException;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/instructor/videos")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@CrossOrigin(origins = "http://localhost:3000")
 public class VideoController {
 
     private final VideoService videoService;
@@ -21,34 +19,31 @@ public class VideoController {
         this.videoService = videoService;
     }
 
-    // Upload (Instructor)
+    // Upload a video
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadVideo(
+    public ResponseEntity<VideoEntity> uploadVideo(
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "instructorEmail", required = false) String instructorEmail
-    ) {
-        try {
-            VideoEntity saved = videoService.uploadToCloudinary(file, title, description, instructorEmail);
-            return ResponseEntity.ok(Map.of(
-                    "id", saved.getId(),
-                    "title", saved.getTitle(),
-                    "url", saved.getUrl(),
-                    "publicId", saved.getPublicId()
-            ));
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Upload failed", "details", e.getMessage()));
-        }
+            @RequestParam("courseId") String courseId,
+            @RequestParam("uploadedBy") String uploadedBy) {
+
+        System.out.println("File: " + file.getOriginalFilename());
+        System.out.println("Title: " + title);
+        System.out.println("CourseId: " + courseId);
+        System.out.println("UploadedBy: " + uploadedBy);
+
+        return ResponseEntity.ok(videoService.uploadVideo(file, title, courseId, uploadedBy));
+    }
+    // Get all videos for a course
+    @GetMapping("/{courseId}")
+    public ResponseEntity<List<VideoEntity>> getCourseVideos(@PathVariable String courseId) {
+        return ResponseEntity.ok(videoService.getVideosByCourse(courseId));
     }
 
-    // List for instructor
-    @GetMapping
-    public List<VideoEntity> listInstructorVideos(@RequestParam(value = "instructorEmail", required = false) String instructorEmail) {
-        if (instructorEmail != null) {
-            return videoService.getVideosByInstructor(instructorEmail);
-        } else {
-            return videoService.getAllVideos();
-        }
+    // Delete a video
+    @DeleteMapping("/{videoId}")
+    public ResponseEntity<String> deleteVideo(@PathVariable String videoId) {
+        videoService.deleteVideo(videoId);
+        return ResponseEntity.ok("Video deleted successfully!");
     }
 }

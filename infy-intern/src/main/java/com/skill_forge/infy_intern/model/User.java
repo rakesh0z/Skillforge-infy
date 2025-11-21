@@ -22,6 +22,7 @@ public class User {
         this.role = role;
     }
 
+
     // Getters and setters
     public String getId() { return id; }
     public String getName() { return name; }

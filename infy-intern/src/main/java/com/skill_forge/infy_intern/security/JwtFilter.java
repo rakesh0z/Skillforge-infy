@@ -51,35 +51,72 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            if (!jwtUtil.isTokenValidFormat(token) || jwtUtil.isTokenExpired(token)) {
+            // Check token format first (this might throw exception)
+            if (!jwtUtil.isTokenValidFormat(token)) {
                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 res.setContentType("application/json");
-                res.getWriter().write("{\"error\":\"Invalid or expired token\"}");
+                res.getWriter().write("{\"error\":\"Invalid token format\"}");
+                return;
+            }
+            
+            // Check if token is expired (handles ExpiredJwtException internally)
+            if (jwtUtil.isTokenExpired(token)) {
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.setContentType("application/json");
+                res.getWriter().write("{\"error\":\"Token expired. Please log in again.\"}");
                 return;
             }
 
+            // Extract email and role (these should work if token is valid and not expired)
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
 
-            // validate single active session
+            // Validate token format and expiration (already checked above)
+            // Note: validateToken checks activeSessions which is lost on server restart
+            // For now, we'll allow valid tokens even if not in activeSessions
+            // You can enable strict session validation by uncommenting the check below
+            /*
             if (!authService.validateToken(token)) {
                 res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 res.setContentType("application/json");
                 res.getWriter().write("{\"error\":\"Session invalid or expired (logged in from another device)\"}");
                 return;
             }
+            */
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (email != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Verify user exists in database
+                User user = authService.getUserByEmail(email);
+                if (user == null) {
+                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    res.setContentType("application/json");
+                    res.getWriter().write("{\"error\":\"User not found\"}");
+                    return;
+                }
+
+                // Verify role matches
+                if (!role.equals(user.getRole().name())) {
+                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    res.setContentType("application/json");
+                    res.getWriter().write("{\"error\":\"Role mismatch\"}");
+                    return;
+                }
+
                 // build authorities from role claim
                 List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-
-                // Optionally you can load full User from DB:
-                User user = authService.getUserByEmail(email);
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(user, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+            
+            // If email or role is null, deny access (even if authentication was already set)
+            if (email == null || role == null) {
+                res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                res.setContentType("application/json");
+                res.getWriter().write("{\"error\":\"Invalid token: missing email or role\"}");
+                return;
             }
 
         } catch (ExpiredJwtException e) {

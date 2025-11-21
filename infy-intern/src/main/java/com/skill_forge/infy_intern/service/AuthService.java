@@ -46,6 +46,8 @@ public class AuthService {
         return token.equals(activeSessions.get(email));
     }
 
+
+
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email).orElse(null);
     }
