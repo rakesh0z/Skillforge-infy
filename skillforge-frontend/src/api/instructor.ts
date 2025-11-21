@@ -62,3 +62,15 @@ export const uploadVideo = async ({
   return data
 }
 
+export const uploadCourseThumbnail = async (courseId: string, file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const { data } = await apiClient.post<Course>(
+    `/api/instructor/courses/${courseId}/thumbnail`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
+  return data
+}
+

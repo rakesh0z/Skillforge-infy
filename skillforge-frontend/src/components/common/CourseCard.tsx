@@ -1,4 +1,4 @@
-import { Course } from '../../types'
+import type { Course } from '../../types'
 import clsx from 'clsx'
 
 interface CourseCardProps {

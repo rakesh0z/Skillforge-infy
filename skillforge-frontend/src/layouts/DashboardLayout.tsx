@@ -54,6 +54,11 @@ const DashboardLayout = ({ title, subtitle, navItems }: DashboardLayoutProps) =>
               {user?.name} · {user?.role}
             </p>
           </div>
+          <div className="flex items-center gap-4">
+            <NavLink to="profile" className="text-sm text-slate-600 hover:text-slate-900">
+              Profile
+            </NavLink>
+          </div>
         </header>
         <main className="flex-1 p-8 space-y-6">
           <Outlet />

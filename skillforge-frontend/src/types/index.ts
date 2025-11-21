@@ -65,3 +65,19 @@ export interface ApiError {
   message: string
 }
 
+export interface InstructorProfile {
+  id?: string
+  email: string
+  name?: string
+  bio?: string
+  profileImageUrl?: string
+  linkedin?: string
+  github?: string
+  specialization?: string
+  experience?: string
+  education?: string
+  website?: string
+  expertise?: string
+  profileImage?: string
+}
+

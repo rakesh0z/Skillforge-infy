@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { addSection, createCourse, deleteSection, getInstructorCourses } from '../../api/instructor'
+import { addSection, createCourse, deleteSection, getInstructorCourses, uploadCourseThumbnail } from '../../api/instructor'
 import LoadingScreen from '../../components/common/LoadingScreen'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -80,6 +80,18 @@ const CurriculumBuilder = () => {
     },
   })
 
+  // Thumbnail upload
+  const [thumbFile, setThumbFile] = useState<File | null>(null)
+  const uploadThumbMutation = useMutation({
+    mutationFn: () => uploadCourseThumbnail(selectedCourseId ?? '', thumbFile as File),
+    onSuccess: () => {
+      toast.success('Course thumbnail uploaded')
+      setThumbFile(null)
+      queryClient.invalidateQueries({ queryKey: ['instructor-courses'] })
+    },
+    onError: () => toast.error('Unable to upload thumbnail'),
+  })
+
   if (isLoading) {
     return <LoadingScreen message="Loading courses..." />
   }
@@ -153,6 +165,25 @@ const CurriculumBuilder = () => {
         </div>
         {selectedCourse ? (
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-600">Course thumbnail</label>
+              <div className="flex gap-2 items-center mt-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setThumbFile(e.target.files?.[0] ?? null)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 bg-white"
+                />
+                <button
+                  type="button"
+                  disabled={!thumbFile || !selectedCourseId || uploadThumbMutation.isPending}
+                  onClick={() => uploadThumbMutation.mutate()}
+                  className="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-semibold disabled:opacity-70"
+                >
+                  {uploadThumbMutation.isPending ? 'Uploading...' : 'Upload thumbnail'}
+                </button>
+              </div>
+            </div>
             <div className="flex gap-2">
               <input
                 value={newSection}

@@ -282,4 +282,19 @@ public class CourseService {
             throw new RuntimeException("Lecture upload failed: " + e.getMessage());
         }
     }
+
+    // 🟢 Update course thumbnail
+    public Course updateCourseThumbnail(String courseId, MultipartFile file) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Thumbnail file is required");
+        }
+
+        String folder = "skillforge/courses/" + courseId + "/thumbnail";
+        String thumbnailUrl = cloudinaryService.uploadImage(file, folder);
+        course.setThumbnail(thumbnailUrl);
+        return courseRepository.save(course);
+    }
 }

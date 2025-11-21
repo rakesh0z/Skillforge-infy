@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQueries } from '@tanstack/react-query'
-import { getCourseById, getCourseVideos, updateProgress } from '../../api/student'
+import { getCourseById, getCourseVideos, updateProgress, getMyCourses } from '../../api/student'
 import LoadingScreen from '../../components/common/LoadingScreen'
 import VideoPlayer from '../../components/common/VideoPlayer'
 import { useAuth } from '../../contexts/AuthContext'
@@ -41,6 +41,34 @@ const CoursePlayer = () => {
     onError: () => toast.error('Unable to update progress'),
   })
 
+  const [currentProgress, setCurrentProgress] = useState<number>(0)
+  const debounceRef = useRef<any>(null)
+
+  // Fetch existing enrollment progress for this course
+  useEffect(() => {
+    let mounted = true
+    if (!user?.email || !courseId) return
+    getMyCourses(user.email).then((enrollments) => {
+      if (!mounted) return
+      const enrollment = enrollments.find((e) => e.courseId === courseId)
+      if (enrollment) setCurrentProgress(Math.round(enrollment.progress ?? 0))
+    })
+    return () => {
+      mounted = false
+    }
+  }, [user?.email, courseId])
+
+  const onVideoProgress = (percent: number) => {
+    // update UI immediately
+    setCurrentProgress(percent)
+
+    // debounce server updates to once per 2s
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      progressMutation.mutate(percent)
+    }, 2000)
+  }
+
   if (courseQuery.isLoading || videoQuery.isLoading || !courseQuery.data) {
     return <LoadingScreen message="Preparing player..." />
   }
@@ -58,6 +86,7 @@ const CoursePlayer = () => {
           src={currentVideo.videoUrl}
           title={currentVideo.title}
           poster={currentVideo.thumbnail}
+          onProgress={onVideoProgress}
         />
       ) : (
         <div className="glass-panel p-10 text-center text-slate-500">
@@ -95,12 +124,17 @@ const CoursePlayer = () => {
             type="range"
             min={0}
             max={100}
-            defaultValue={0}
-            onChange={(event) => progressMutation.mutate(Number(event.target.value))}
+            value={currentProgress}
+            onChange={(event) => {
+              const v = Number(event.target.value)
+              setCurrentProgress(v)
+              if (debounceRef.current) clearTimeout(debounceRef.current)
+              debounceRef.current = setTimeout(() => progressMutation.mutate(v), 800)
+            }}
             className="w-full accent-brand-500"
           />
           <p className="text-xs text-slate-500">
-            Drag slider to push completion percentage ({progressMutation.isPending ? 'Saving...' : 'Auto-saved'}).
+            Tracking progress automatically ({progressMutation.isPending ? 'Saving...' : 'Auto-saved'}).
           </p>
         </div>
       </div>

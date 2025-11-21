@@ -21,7 +21,7 @@ const LandingPage = () => (
       <div className="space-y-6">
         <p className="text-sm font-semibold text-brand-600 uppercase">SkillForge</p>
         <h1 className="text-5xl font-bold text-slate-900 leading-tight">
-          Udemy-grade learning experiences without the platform tax.
+          Build professional learning experiences with SkillForge — no platform middleman.
         </h1>
         <p className="text-lg text-slate-600">
           Ship multi-role academies with student, instructor, and admin workspaces powered by Spring
