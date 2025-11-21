@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { addSection, createCourse, deleteSection, getInstructorCourses, uploadCourseThumbnail } from '../../api/instructor'
+import { addSection, createCourse, deleteSection, getInstructorCourses, uploadCourseThumbnail, uploadCourseNote } from '../../api/instructor'
 import LoadingScreen from '../../components/common/LoadingScreen'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -92,6 +92,20 @@ const CurriculumBuilder = () => {
     onError: () => toast.error('Unable to upload thumbnail'),
   })
 
+  // Notes (PDF) upload
+  const [noteFile, setNoteFile] = useState<File | null>(null)
+  const [noteTitle, setNoteTitle] = useState<string>('')
+  const uploadNoteMutation = useMutation({
+    mutationFn: () => uploadCourseNote(selectedCourseId ?? '', noteFile as File, noteTitle),
+    onSuccess: () => {
+      toast.success('Notes uploaded and attached to course')
+      setNoteFile(null)
+      setNoteTitle('')
+      queryClient.invalidateQueries({ queryKey: ['instructor-courses'] })
+    },
+    onError: () => toast.error('Unable to upload notes'),
+  })
+
   if (isLoading) {
     return <LoadingScreen message="Loading courses..." />
   }
@@ -165,6 +179,32 @@ const CurriculumBuilder = () => {
         </div>
         {selectedCourse ? (
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-600">Upload course notes (PDF)</label>
+              <div className="grid md:grid-cols-3 gap-2 mt-2">
+                <input
+                  type="text"
+                  placeholder="Title (optional)"
+                  value={noteTitle}
+                  onChange={(e) => setNoteTitle(e.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2"
+                />
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => setNoteFile(e.target.files?.[0] ?? null)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 bg-white"
+                />
+                <button
+                  type="button"
+                  disabled={!noteFile || !selectedCourseId || uploadNoteMutation.isPending}
+                  onClick={() => uploadNoteMutation.mutate()}
+                  className="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-semibold disabled:opacity-70"
+                >
+                  {uploadNoteMutation.isPending ? 'Uploading...' : 'Upload notes'}
+                </button>
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium text-slate-600">Course thumbnail</label>
               <div className="flex gap-2 items-center mt-2">

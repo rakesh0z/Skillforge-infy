@@ -1,6 +1,7 @@
 package com.skill_forge.infy_intern.service;
 
 import com.skill_forge.infy_intern.model.Course;
+import com.skill_forge.infy_intern.model.Note;
 import com.skill_forge.infy_intern.model.Section;
 import com.skill_forge.infy_intern.model.VideoEntity;
 import com.skill_forge.infy_intern.repository.CourseRepository;
@@ -295,6 +296,31 @@ public class CourseService {
         String folder = "skillforge/courses/" + courseId + "/thumbnail";
         String thumbnailUrl = cloudinaryService.uploadImage(file, folder);
         course.setThumbnail(thumbnailUrl);
+        return courseRepository.save(course);
+    }
+
+    // 🟢 Upload notes (PDF) and attach to course
+    public Course uploadCourseNote(String courseId, MultipartFile file, String title) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Notes file is required");
+        }
+
+        String folder = "skillforge/courses/" + courseId + "/notes";
+        String fileUrl = cloudinaryService.uploadFile(file, folder);
+
+        // Create Note object and attach
+        Note note = new Note();
+        note.setId(java.util.UUID.randomUUID().toString());
+        note.setTitle(title == null || title.trim().isEmpty() ? file.getOriginalFilename() : title);
+        note.setUrl(fileUrl);
+
+        if (course.getNotes() == null) {
+            course.setNotes(new java.util.ArrayList<>());
+        }
+        course.getNotes().add(note);
         return courseRepository.save(course);
     }
 }

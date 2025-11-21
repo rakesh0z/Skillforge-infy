@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingScreen from '../components/common/LoadingScreen'
-import { getInstructorProfile, saveInstructorProfile, uploadInstructorProfileImage } from '../api/instructorProfile'
+import { getInstructorProfile, saveInstructorProfile } from '../api/instructorProfile'
+import { updateUserProfile, uploadAvatar } from '../api/user'
 
 const ProfilePage = () => {
   const { user } = useAuth()
@@ -24,8 +25,17 @@ const ProfilePage = () => {
     if (instructorProfile) setLocal(instructorProfile)
   }, [user, instructorProfile])
 
-  const saveMutation = useMutation({
-    mutationFn: (payload: any) => saveInstructorProfile(payload),
+    const saveMutation = useMutation({
+    mutationFn: (payload: any) => {
+      // Update shared user document
+      const userUpdate = { name: payload.name, headline: payload.headline, bio: payload.bio }
+      return updateUserProfile(userUpdate).then(() => {
+        // If instructor, also save instructor profile collection
+        if (user?.role === 'INSTRUCTOR') {
+          return saveInstructorProfile(payload)
+        }
+      })
+    },
     onSuccess: (data) => {
       toast.success('Profile saved')
       queryClient.invalidateQueries({ queryKey: ['instructor-profile', user?.email] })
@@ -35,11 +45,17 @@ const ProfilePage = () => {
   })
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadInstructorProfileImage(user?.email ?? '', file),
-    onSuccess: (url) => {
+    mutationFn: (file: File) => uploadAvatar(file),
+    onSuccess: (res: any) => {
+      const url = res?.url ?? res
       toast.success('Profile image uploaded')
       setLocal((s: any) => ({ ...s, profileImageUrl: url }))
       queryClient.invalidateQueries({ queryKey: ['instructor-profile', user?.email] })
+      // If instructor, also save into instructor profile collection
+      if (user?.role === 'INSTRUCTOR') {
+        // update instructor profile image field as well
+        saveInstructorProfile({ ...(instructorProfile ?? {}), profileImageUrl: url, email: user.email as string }).catch(() => {})
+      }
     },
     onError: () => toast.error('Unable to upload image'),
   })

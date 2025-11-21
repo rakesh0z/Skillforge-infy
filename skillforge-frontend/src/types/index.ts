@@ -37,6 +37,7 @@ export interface Course {
   studentsCount?: number
   videoCount?: number
   sections?: Section[]
+  notes?: Note[]
 }
 
 export interface Enrollment {
@@ -59,6 +60,12 @@ export interface VideoEntity {
   thumbnail?: string
   sectionTitle?: string
   duration?: number
+}
+
+export interface Note {
+  id: string
+  title: string
+  url: string
 }
 
 export interface ApiError {

@@ -130,4 +130,17 @@ public class CourseController {
                                                   @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(courseService.updateCourseThumbnail(courseId, file));
     }
+
+    // 🟢 Upload notes (PDF) for a course
+    @PostMapping("/{courseId}/notes")
+    public ResponseEntity<?> uploadCourseNotes(@PathVariable String courseId,
+                                               @RequestParam("file") MultipartFile file,
+                                               @RequestParam(required = false) String title) {
+        try {
+            Course updated = courseService.uploadCourseNote(courseId, file, title);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
 }
