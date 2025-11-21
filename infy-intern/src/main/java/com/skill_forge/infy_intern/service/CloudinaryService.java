@@ -127,4 +127,32 @@ public class CloudinaryService {
         }
     }
 
+    // Upload arbitrary file (PDFs, docs) as raw/resource_type=raw
+    public String uploadFile(MultipartFile file, String folder) {
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new RuntimeException("File is empty or null");
+            }
+
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
+                            "resource_type", "raw",
+                            "use_filename", true,
+                            "unique_filename", true
+                    ));
+            return uploadResult.get("secure_url").toString();
+        } catch (IOException e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (errorMsg.contains("No such host is known") ||
+                                     errorMsg.contains("UnknownHostException"))) {
+                throw new RuntimeException("Cannot connect to Cloudinary API. Please check your internet connection and Cloudinary credentials in application.properties");
+            }
+            throw new RuntimeException("Cloudinary file upload failed: " + errorMsg);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            throw new RuntimeException("Cloudinary file upload failed: " + errorMsg);
+        }
+    }
+
 }

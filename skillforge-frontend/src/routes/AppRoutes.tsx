@@ -12,6 +12,7 @@ import MyCourses from '../pages/student/MyCourses'
 import CourseDetail from '../pages/student/CourseDetail'
 import CoursePlayer from '../pages/student/CoursePlayer'
 import InstructorDashboard from '../pages/instructor/InstructorDashboard'
+import ProfilePage from '../pages/ProfilePage'
 import CurriculumBuilder from '../pages/instructor/CurriculumBuilder'
 import VideoUploads from '../pages/instructor/VideoUploads'
 import AdminDashboard from '../pages/admin/AdminDashboard'
@@ -35,6 +36,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     >
+      <Route path="profile" element={<ProfilePage />} />
       <Route path="dashboard" element={<StudentDashboard />} />
       <Route path="courses" element={<BrowseCatalog />} />
       <Route path="my-courses" element={<MyCourses />} />
@@ -51,6 +53,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     >
+      <Route path="profile" element={<ProfilePage />} />
       <Route path="dashboard" element={<InstructorDashboard />} />
       <Route path="curriculum" element={<CurriculumBuilder />} />
       <Route path="videos" element={<VideoUploads />} />

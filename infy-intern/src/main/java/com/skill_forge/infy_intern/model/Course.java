@@ -28,6 +28,7 @@ public class Course {
     private Integer studentsCount;
     private Integer videoCount;
     private List<Section> sections = new ArrayList<>();
+    private List<Note> notes = new ArrayList<>();
 
     public Course() {}
 
@@ -86,4 +87,7 @@ public class Course {
 
     public List<Section> getSections() { return sections; }
     public void setSections(List<Section> sections) { this.sections = sections != null ? sections : new ArrayList<>(); }
+
+    public List<Note> getNotes() { return notes; }
+    public void setNotes(List<Note> notes) { this.notes = notes != null ? notes : new ArrayList<>(); }
 }

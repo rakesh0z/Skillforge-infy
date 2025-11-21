@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/instructor/courses")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class CourseController {
 
     private final CourseService courseService;
@@ -122,5 +122,25 @@ public class CourseController {
                                                       @RequestParam String title,
                                                       @RequestParam String uploadedBy) {
         return ResponseEntity.ok(courseService.addLectureToSection(courseId, sectionId, file, title, uploadedBy));
+    }
+
+    // 🟢 Upload course thumbnail
+    @PostMapping("/{courseId}/thumbnail")
+    public ResponseEntity<Course> uploadThumbnail(@PathVariable String courseId,
+                                                  @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(courseService.updateCourseThumbnail(courseId, file));
+    }
+
+    // 🟢 Upload notes (PDF) for a course
+    @PostMapping("/{courseId}/notes")
+    public ResponseEntity<?> uploadCourseNotes(@PathVariable String courseId,
+                                               @RequestParam("file") MultipartFile file,
+                                               @RequestParam(required = false) String title) {
+        try {
+            Course updated = courseService.uploadCourseNote(courseId, file, title);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 }
